@@ -191,71 +191,121 @@ class Trade:
 
 
 class OrderWrapper:
+    """
+    【中文说明】订单包装器基类
+    【功能描述】提供订单信息的通用属性和方法，作为其他订单类的基类
+    【使用场景】用于解析和处理Binance订单API返回的JSON数据
+    【继承关系】作为OrderInfo、CanceledOrder、OpenOrder等类的基类
+    """
     def __init__(self, json: dict):
+        """
+        【中文说明】初始化订单包装器
+        【功能描述】从Binance API返回的JSON数据创建订单包装器对象
+        【参数说明】
+        - json: Binance订单JSON数据
+        """
         self.json = json
 
     @property
     def id(self) -> str:
-        """The order id."""
+        """
+        【中文说明】订单ID
+        【功能描述】获取订单的唯一标识符
+        【返回说明】字符串类型的订单ID
+        """
         return str(self.json["orderId"])
 
     @property
     def client_order_id(self) -> str:
-        """The client order id."""
+        """
+        【中文说明】客户端订单ID
+        【功能描述】获取客户端自定义的订单标识符
+        【返回说明】字符串类型的客户端订单ID
+        """
         return self.json["clientOrderId"]
 
     @property
     def order_list_id(self) -> Optional[str]:
-        """The order list id."""
+        """
+        【中文说明】订单列表ID
+        【功能描述】获取OCO订单列表的标识符
+        【返回说明】字符串类型的订单列表ID，非OCO订单返回None
+        """
         ret = self.json.get("orderListId")
         ret = None if ret in [None, -1] else str(ret)
         return ret
 
     @property
     def status(self) -> str:
-        """The status.
-
-        Check **Order status** in
-        https://developers.binance.com/docs/binance-spot-api-docs/enums#order-status-status.
+        """
+        【中文说明】订单状态
+        【功能描述】获取订单的当前状态
+        【返回说明】字符串类型的订单状态
+        【注意事项】参考Binance官方文档的订单状态枚举
         """
         return self.json["status"]
 
     @property
     def is_open(self) -> bool:
-        """True if the order is open, False otherwise."""
+        """
+        【中文说明】是否开放订单
+        【功能描述】判断订单是否处于开放状态（可成交或可取消）
+        【返回说明】布尔值，True表示订单开放，False表示订单已完成或取消
+        """
         return helpers.order_status_is_open(self.status)
 
     @property
     def amount(self) -> Decimal:
-        """The amount."""
+        """
+        【中文说明】订单数量
+        【功能描述】获取订单的原始数量（基础货币）
+        【返回说明】Decimal类型的订单数量
+        """
         return Decimal(self.json["origQty"])
 
     @property
     def amount_filled(self) -> Decimal:
-        """The amount filled."""
+        """
+        【中文说明】已成交数量
+        【功能描述】获取订单已成交的数量
+        【返回说明】Decimal类型的已成交数量
+        """
         return Decimal(self.json["executedQty"])
 
     @property
     def quote_amount_filled(self) -> Decimal:
-        """The amount filled in quote units."""
+        """
+        【中文说明】已成交计价货币数量
+        【功能描述】获取订单已成交的计价货币总金额
+        【返回说明】Decimal类型的已成交计价货币数量
+        """
         return Decimal(self.json["cummulativeQuoteQty"])
 
     @property
     def limit_price(self) -> Optional[Decimal]:
-        """The limit price."""
+        """
+        【中文说明】限价价格
+        【功能描述】获取限价单的价格
+        【返回说明】Decimal类型的限价价格，市价单返回None
+        """
         return helpers.get_optional_decimal(self.json, "price", True)
 
     @property
     def stop_price(self) -> Optional[Decimal]:
-        """The stop price."""
+        """
+        【中文说明】止损价格
+        【功能描述】获取止损单的触发价格
+        【返回说明】Decimal类型的止损价格，非止损单返回None
+        """
         return helpers.get_optional_decimal(self.json, "stopPrice", True)
 
     @property
     def time_in_force(self) -> Optional[str]:
-        """The time in force.
-
-        Check **Time in force** in
-        https://developers.binance.com/docs/binance-spot-api-docs/enums#time-in-force-timeinforce.
+        """
+        【中文说明】订单时效
+        【功能描述】获取订单的有效期设置
+        【返回说明】字符串类型的订单时效，如"GTC"、"IOC"、"FOK"等
+        【注意事项】参考Binance官方文档的订单时效枚举
         """
         return self.json.get("timeInForce")
 
