@@ -14,6 +14,29 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""
+Yahoo金融K线数据源模块
+
+此模块提供了从Yahoo Finance CSV格式数据文件加载股票K线数据的功能，支持：
+- 标准Yahoo Finance CSV格式解析
+- OHLC价格数据调整和清理
+- 复权价格计算
+- 多种时区支持
+
+主要类：
+- RowParser: Yahoo Finance CSV行解析器
+- CSVBarSource: CSV K线数据源
+
+数据格式：
+Date,Open,High,Low,Close,Volume,Adj Close
+YYYY-MM-DD,价格,价格,价格,价格,成交量,复权收盘价
+
+使用场景：
+- 股票历史数据回测
+- 投资策略研究
+- 技术分析
+"""
+
 from decimal import Decimal
 from typing import Sequence, Tuple
 import datetime

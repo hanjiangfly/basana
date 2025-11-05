@@ -14,6 +14,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""
+Binance订单簿镜像策略示例
+
+此示例演示了如何维护一个本地订单簿副本，通过处理Binance WebSocket流中的差异更新，
+并定期与REST API快照进行一致性检查，确保本地订单簿与交易所保持同步。
+
+主要组件：
+- OrderBook: 本地订单簿数据结构
+- OrderBookUpdater: 订单簿更新器，管理状态转换和同步
+- UpdaterState: 更新器状态抽象基类
+- Initializing: 初始化状态，获取初始快照
+- Updating: 更新状态，处理差异和一致性检查
+
+使用场景：
+- 高频交易策略需要实时订单簿数据
+- 市场深度分析
+- 套利策略实现
+"""
+
 from decimal import Decimal
 from typing import List, Optional, Tuple
 import abc
