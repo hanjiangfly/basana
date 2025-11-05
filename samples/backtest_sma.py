@@ -14,6 +14,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""
+简单移动平均策略回测示例
+
+此示例演示了如何使用Basana框架进行简单移动平均策略的回测，包括：
+- 回测交易所设置和配置
+- 简单移动平均策略集成
+- 仓位管理
+- 图表可视化
+
+策略逻辑：
+- 当短期均线上穿长期均线时做多
+- 当短期均线下穿长期均线时做空
+- 当均线交叉时平仓
+"""
+
 # Bars can be downloaded using this command:
 # python -m basana.external.binance.tools.download_bars -c BTC/USDT -p 1d -s 2021-01-01 -e 2021-12-31 \
 # -o binance_btcusdt_day.csv

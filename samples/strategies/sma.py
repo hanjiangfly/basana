@@ -14,6 +14,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""
+简单移动平均策略实现
+
+此策略基于简单移动平均技术指标，通过价格与移动平均线的交叉关系生成交易信号。
+
+策略逻辑：
+- 当价格上穿移动平均线时做多
+- 当价格下穿移动平均线时做空
+- 当价格与移动平均线交叉时平仓
+
+使用场景：
+- 趋势跟踪策略
+- 市场方向判断
+- 技术分析参考
+"""
+
 from talipp.indicators import SMA
 
 import basana as bs

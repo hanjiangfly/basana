@@ -14,6 +14,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""
+Binance WebSocket实时数据示例
+
+此示例演示了如何使用Basana框架连接Binance WebSocket获取实时数据，包括：
+- K线数据流
+- 订单簿数据流
+- 交易数据流
+- 订单事件流（需要API密钥）
+
+使用场景：
+- 实时监控市场数据
+- 构建实时交易系统
+- 数据分析和可视化
+"""
+
 import asyncio
 import logging
 

@@ -14,9 +14,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Bars can be downloaded using this command:
-# python -m basana.external.binance.tools.download_bars -c BTC/USDT -p 1d -s 2021-01-01 -e 2021-12-31 \
-# -o binance_btcusdt_day.csv
+"""
+布林带策略回测示例
+
+此示例演示了如何使用Basana框架进行布林带策略的回测，包括：
+- 回测交易所设置和配置
+- 布林带策略集成
+- 仓位管理
+- 图表可视化
+- 借贷和费用策略
+
+数据下载命令：
+python -m basana.external.binance.tools.download_bars -c BTC/USDT -p 1d -s 2021-01-01 -e 2021-12-31 \
+-o binance_btcusdt_day.csv
+"""
 
 from decimal import Decimal
 import asyncio
