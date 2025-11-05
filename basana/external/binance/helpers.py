@@ -14,6 +14,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""
+【中文说明】Binance辅助工具模块
+【功能描述】提供Binance交易所API相关的通用工具函数和转换函数
+【使用场景】用于API签名、数据转换、状态判断等通用操作
+【功能分类】
+- API认证：HMAC签名生成
+- 数据转换：交易对转换、时间戳转换、数值转换
+- 状态判断：订单状态、OCO订单状态
+- 枚举映射：订单操作类型转换
+【注意事项】这些函数是Binance API集成的核心工具组件
+"""
+
 from decimal import Decimal
 from typing import Optional
 from urllib.parse import urlencode
