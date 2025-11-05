@@ -14,6 +14,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""
+【中文说明】Binance交易所客户端模块
+【功能描述】提供Binance加密货币交易所的完整客户端接口，支持现货、保证金交易和实时数据订阅
+【使用场景】用于连接Binance交易所进行实时交易、数据获取和事件处理
+【模块特性】
+- 支持现货、全仓保证金、逐仓保证金账户操作
+- 提供WebSocket实时数据订阅（K线、订单簿、交易等）
+- 支持REST API查询（余额、订单、交易对信息等）
+- 集成事件分发器，支持异步事件处理
+【注意事项】需要配置API密钥和密钥，遵守Binance API使用限制
+"""
+
 from decimal import Decimal
 from typing import Dict, List, Optional, Tuple, Union
 import dataclasses
@@ -45,29 +57,31 @@ OrderBookEventHandler = order_book.PartialOrderBookEventHandler
 
 @dataclasses.dataclass(frozen=True)
 class PairInfoEx(PairInfo):
-    """Information about a trading pair.
-
-    :param base_precision: The precision for the base symbol.
-    :param quote_precision: The precision for the quote symbol.
-    :param permissions: The account and pair permissions.
-
-    Check **Account and Symbol Permissions** in https://binance-docs.github.io/apidocs/spot/en/#public-api-definitions.
+    """
+    【中文说明】扩展交易对信息类
+    【功能描述】在基础PairInfo基础上增加权限信息，提供完整的Binance交易对信息
+    【使用场景】用于获取交易对的精度信息和账户权限
+    【继承关系】继承自PairInfo，增加permissions字段
+    【注意事项】数据类，不可变对象
     """
 
-    #: The account and pair permissions.
+    #: 【中文说明】账户和交易对权限列表
+    #: 【功能描述】包含该交易对支持的操作权限，如现货交易、保证金交易等
+    #: 【权限示例】["SPOT", "MARGIN", "TRD_GRP_003"]等
     permissions: List[str]
 
 
 class Exchange:
-    """A client for `Binance <https://www.binance.com/>`_ crypto currency exchange.
-
-    :param dispatcher: The event dispatcher.
-    :param api_key: An optional api key. If not set only public endpoints can be used.
-    :param api_secret: An optional api secret. If not set only public endpoints can be used.
-    :param session: An optional client session, in case you want to reuse connections.
-    :type session: aiohttp.ClientSession
-    :param tb: An optional token bucket limiter, in case you want to throttle requests.
-    :param config_overrides: An optional dictionary for overriding config settings.
+    """
+    【中文说明】Binance交易所客户端类
+    【功能描述】提供Binance加密货币交易所的完整客户端功能，支持REST API和WebSocket连接
+    【使用场景】用于连接Binance交易所进行交易、数据订阅和账户管理
+    【核心功能】
+    - 实时数据订阅：K线、订单簿、交易数据等
+    - 账户管理：现货、全仓保证金、逐仓保证金账户
+    - 交易对信息：精度、权限、符号转换等
+    - 订单簿查询：买卖价、深度信息等
+    【注意事项】需要配置API密钥和密钥，遵守Binance API使用限制
     """
 
     def __init__(
@@ -75,6 +89,17 @@ class Exchange:
             api_secret: Optional[str] = None, session: Optional[aiohttp.ClientSession] = None,
             tb: Optional[token_bucket.TokenBucketLimiter] = None, config_overrides: dict = {}
     ):
+        """
+        【中文说明】初始化Binance交易所客户端
+        【功能描述】创建Binance交易所客户端实例，配置API认证和连接参数
+        【参数说明】
+        - dispatcher: 事件分发器，用于处理异步事件
+        - api_key: API密钥，可选，未设置时只能使用公共接口
+        - api_secret: API密钥，可选，未设置时只能使用公共接口
+        - session: HTTP客户端会话，可选，用于复用连接
+        - tb: 令牌桶限流器，可选，用于控制请求频率
+        - config_overrides: 配置覆盖字典，可选，用于自定义配置参数
+        """
         self._dispatcher = dispatcher
         self._cli = client.APIClient(
             api_key=api_key, api_secret=api_secret, session=session, tb=tb, config_overrides=config_overrides
@@ -82,8 +107,8 @@ class Exchange:
         self._session = session
         self._tb = tb
         self._config_overrides = config_overrides
-        self._symbol_info: Dict[str, PairInfoEx] = {}
-        self._symbol_to_pair: Dict[str, Pair] = {}
+        self._symbol_info: Dict[str, PairInfoEx] = {}  # 【中文说明】符号到交易对信息的映射缓存
+        self._symbol_to_pair: Dict[str, Pair] = {}  # 【中文说明】符号到Pair对象的映射缓存
         self._ws_mgr = websocket_mgr.WebsocketManager(
             dispatcher, self._cli, session=session, config_overrides=config_overrides
         )

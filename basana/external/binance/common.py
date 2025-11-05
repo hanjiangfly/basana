@@ -14,6 +14,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""
+【中文说明】Binance通用数据模型模块
+【功能描述】定义Binance交易所API返回数据的通用数据模型和包装类
+【使用场景】用于解析和处理Binance API返回的JSON数据，提供类型安全的访问接口
+【注意事项】所有类都基于JSON数据构建，提供属性访问器来获取特定字段
+"""
+
 from decimal import Decimal
 from typing import Dict, Optional, Sequence
 import collections
@@ -24,73 +31,162 @@ from basana.core.enums import OrderOperation
 
 
 class Balance:
+    """
+    【中文说明】账户余额数据类
+    【功能描述】封装Binance账户余额信息，包括可用余额、锁定余额和总余额
+    【使用场景】用于解析账户查询API返回的余额数据
+    【注意事项】基于JSON数据构建，提供Decimal类型的数值访问
+    """
     def __init__(self, json: dict):
+        """
+        【中文说明】初始化余额对象
+        【功能描述】从Binance API返回的JSON数据创建余额对象
+        【参数说明】
+        - json: Binance账户余额JSON数据
+        """
         self.json = json
 
     @property
     def available(self) -> Decimal:
-        """The available balance."""
+        """
+        【中文说明】可用余额
+        【功能描述】获取账户中可用的余额数量
+        【返回说明】Decimal类型的可用余额
+        """
         return Decimal(self.json["free"])
 
     @property
     def total(self) -> Decimal:
-        """The total balance (available + locked)."""
+        """
+        【中文说明】总余额
+        【功能描述】获取账户总余额（可用余额 + 锁定余额）
+        【返回说明】Decimal类型的总余额
+        """
         return self.available + self.locked
 
     @property
     def locked(self) -> Decimal:
-        """The locked balance."""
+        """
+        【中文说明】锁定余额
+        【功能描述】获取账户中被锁定的余额数量（如挂单中的资金）
+        【返回说明】Decimal类型的锁定余额
+        """
         return Decimal(self.json["locked"])
 
 
 class Trade:
+    """
+    【中文说明】交易数据类
+    【功能描述】封装Binance交易记录信息，包括交易ID、价格、数量、手续费等
+    【使用场景】用于解析交易历史、订单成交记录等API返回的交易数据
+    【注意事项】基于JSON数据构建，提供类型安全的属性访问
+    """
     def __init__(self, json: dict):
+        """
+        【中文说明】初始化交易对象
+        【功能描述】从Binance API返回的JSON数据创建交易对象
+        【参数说明】
+        - json: Binance交易记录JSON数据
+        """
         self.json = json
 
     @property
     def id(self) -> str:
-        """The trade id."""
+        """
+        【中文说明】交易ID
+        【功能描述】获取交易的唯一标识符
+        【返回说明】字符串类型的交易ID
+        """
         return str(self.json["id"])
 
     @property
     def order_id(self) -> str:
-        """The order id."""
+        """
+        【中文说明】订单ID
+        【功能描述】获取该交易所属的订单ID
+        【返回说明】字符串类型的订单ID
+        """
         return str(self.json["orderId"])
 
     @property
     def datetime(self) -> datetime.datetime:
+        """
+        【中文说明】交易时间
+        【功能描述】获取交易发生的时间戳
+        【返回说明】datetime类型的交易时间（UTC时区）
+        """
         return helpers.timestamp_to_datetime(self.json["time"])
 
     @property
     def is_best_match(self) -> bool:
+        """
+        【中文说明】是否最佳匹配
+        【功能描述】判断该交易是否是最佳价格匹配
+        【返回说明】布尔值，True表示最佳匹配
+        """
         return self.json["isBestMatch"]
 
     @property
     def is_buyer(self) -> bool:
+        """
+        【中文说明】是否为买方
+        【功能描述】判断该交易是否为买入交易
+        【返回说明】布尔值，True表示买入，False表示卖出
+        """
         return self.json["isBuyer"]
 
     @property
     def is_maker(self) -> bool:
+        """
+        【中文说明】是否为挂单方
+        【功能描述】判断该交易是否为挂单方（maker）
+        【返回说明】布尔值，True表示挂单方，False表示吃单方
+        """
         return self.json["isMaker"]
 
     @property
     def price(self) -> Decimal:
+        """
+        【中文说明】交易价格
+        【功能描述】获取交易的成交价格
+        【返回说明】Decimal类型的交易价格
+        """
         return Decimal(self.json["price"])
 
     @property
     def amount(self) -> Decimal:
+        """
+        【中文说明】交易数量
+        【功能描述】获取交易的成交数量（基础货币数量）
+        【返回说明】Decimal类型的交易数量
+        """
         return Decimal(self.json["qty"])
 
     @property
     def quote_amount(self) -> Decimal:
+        """
+        【中文说明】计价货币数量
+        【功能描述】获取交易的计价货币总金额
+        【返回说明】Decimal类型的计价货币数量
+        """
         return Decimal(self.json["quoteQty"])
 
     @property
     def commission(self) -> Decimal:
+        """
+        【中文说明】手续费
+        【功能描述】获取该交易产生的手续费
+        【返回说明】Decimal类型的手续费金额
+        """
         return Decimal(self.json["commission"])
 
     @property
     def commission_asset(self) -> str:
+        """
+        【中文说明】手续费币种
+        【功能描述】获取手续费支付的币种
+        【返回说明】字符串类型的手续费币种
+        """
         return self.json["commissionAsset"]
 
 
