@@ -14,6 +14,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""
+订单管理模块
+
+提供回测系统中的订单管理功能，包括：
+- 订单生命周期管理
+- 订单处理与执行
+- 余额和冻结管理
+- 借贷和还款管理
+
+支持即时订单处理和基于K线事件的订单处理。
+"""
+
 from collections import defaultdict
 from decimal import Decimal
 from typing import Any, Awaitable, cast, Callable, Dict, Generator, Iterable, List, Optional
@@ -34,12 +46,25 @@ import basana as bs
 
 logger = logging.getLogger(__name__)
 
+# 类型别名定义
 LiquidityStrategyFactory = Callable[[], liquidity.LiquidityStrategy]
 OrderEventHandler = Callable[["OrderEvent"], Awaitable[Any]]
 
 
 @dataclasses.dataclass
 class ExchangeContext:
+    """交易所上下文。
+
+    提供对账户余额、价格、费用等不同服务的访问。
+
+    :param dispatcher: 事件分发器。
+    :param account_balances: 账户余额管理器。
+    :param prices: 价格管理器。
+    :param fee_strategy: 费用策略。
+    :param liquidity_strategy_factory: 流动性策略工厂。
+    :param loan_mgr: 借贷管理器。
+    :param config: 配置管理器。
+    """
     dispatcher: dispatcher.BacktestingDispatcher
     account_balances: account_balances.AccountBalances
     prices: prices.Prices
@@ -50,27 +75,28 @@ class ExchangeContext:
 
 
 class OrderEvent(bs.Event):
-    """
-    An event for order updates.
+    """订单更新事件。
+
+    :param when: 事件时间。
+    :param order: 订单信息。
     """
 
     def __init__(self, when: datetime.datetime, order: OrderInfo):
         super().__init__(when)
-        #: The order.
+        #: 订单信息。
         self.order: OrderInfo = order
 
 
 class OrderManager:
-    """
-    Manages orders and full lifecycle in a backtesting environment.
+    """订单管理器。
 
-    This class is responsible for accepting orders, processing them against bar events and managing holds and
-    balance updates.
+    在回测环境中管理订单和完整生命周期。
 
-    :param exchange_ctx: The exchange context that provides access to different services like account balances,
-        prices, fees, etc.
-    :param immediate_order_processing: If True, orders will be processed immediately after being added,
-        using the close price of the last bar available. If False, orders will be processed in the next bar event.
+    此类负责接受订单、根据K线事件处理订单以及管理冻结和余额更新。
+
+    :param exchange_ctx: 交易所上下文，提供对账户余额、价格、费用等不同服务的访问。
+    :param immediate_order_processing: 如果为True，订单将在添加后立即处理，使用最后一个可用K线的收盘价。
+        如果为False，订单将在下一个K线事件中处理。
     """
 
     def __init__(self, exchange_ctx: ExchangeContext, immediate_order_processing: bool = False):
@@ -84,38 +110,46 @@ class OrderManager:
         self._order_updates = core_helpers.LazyProxy(bs.FifoQueueEventSource)
 
     def on_bar_event(self, bar_event: BarEvent):
+        """处理K线事件。
+
+        :param bar_event: K线事件。
+        """
         liquidity_strategy = self._liquidity_strategies[bar_event.bar.pair]
         liquidity_strategy.on_bar(bar_event.bar)
         for order in filter(lambda o: o.pair == bar_event.bar.pair, self._orders.get_open()):
             self._process_order(order, bar_event.bar, liquidity_strategy)
 
     def add_order(self, order: Order):
+        """添加订单。
+
+        :param order: 订单对象。
+        :raises errors.NotEnoughBalance: 如果余额不足。
+        """
         try:
-            # Before the order gets accepted we need to hold any required balance that will be debited as the order gets
-            # filled.
+            # 在订单被接受之前，我们需要冻结订单成交时将扣除的任何所需余额。
             if required_balances := self._estimate_required_balances(order):
                 if order.auto_borrow:
                     self._borrow(required_balances, order)
                 self._ctx.account_balances.update(hold_updates=required_balances)
                 self._holds_by_order[order.id] = required_balances
 
-            # The order got accepted.
+            # 订单已被接受。
             self._orders.add(order)
         except errors.NotEnoughBalance as e:
             logger.debug(logs.StructuredMessage(
-                "Not enough balance to accept order", order=order.get_debug_info(), error=str(e)
+                "余额不足无法接受订单", order=order.get_debug_info(), error=str(e)
             ))
             raise
 
-        # If immediate order processing is enabled we process the order using the last bar available.
-        # Otherwise, we wait for the next bar event.
+        # 如果启用了即时订单处理，我们使用最后一个可用K线处理订单。
+        # 否则，我们等待下一个K线事件。
         push_order_update = True
         if self._iop:
             try:
                 last_bar = self._ctx.prices.get_last_bar(order.pair)
             except errors.NotFound:
                 logger.debug(logs.StructuredMessage(
-                    "No price available for immediate order processing", order=order.get_debug_info()
+                    "即时订单处理无可用价格", order=order.get_debug_info()
                 ))
                 push_order_update = not self._order_not_filled(order)
             else:
@@ -126,36 +160,55 @@ class OrderManager:
                     volume=last_bar.volume
                 )
                 liquidity_strategy = self._liquidity_strategies[order.pair]
-                # If the order is not updated during processing, we push an update for the order that is being added.
+                # 如果订单在处理期间未更新，我们为正在添加的订单推送更新。
                 push_order_update = not self._process_order(order, bar, liquidity_strategy)
 
         if push_order_update:
             self._push_order_update(order)
 
     def get_order(self, order_id: str) -> Optional[Order]:
+        """根据ID获取订单。
+
+        :param order_id: 订单ID。
+        :return: 订单对象，如果不存在则返回None。
+        """
         return self._orders.get(order_id)
 
     def get_all_orders(self) -> Iterable[Order]:
+        """获取所有订单。
+
+        :return: 所有订单的可迭代集合。
+        """
         return self._orders.get_all()
 
     def get_open_orders(self) -> Generator[Order, None, None]:
+        """获取所有打开状态的订单。
+
+        :return: 打开状态订单的生成器。
+        """
         return self._orders.get_open()
 
     def cancel_order(self, order_id: str):
+        """取消订单。
+
+        :param order_id: 订单ID。
+        :raises errors.Error: 如果订单不存在或无法取消。
+        """
         order = self._orders.get(order_id)
         if order is None:
-            raise errors.Error("Order not found")
+            raise errors.Error("订单未找到")
         if not order.is_open:
-            raise errors.Error("Order {} is in {} state and can't be canceled".format(order_id, order.state))
+            raise errors.Error("订单 {} 处于 {} 状态，无法取消".format(order_id, order.state))
         order.cancel()
         self._order_closed(order)
         self._push_order_update(order)
 
     def subscribe_to_order_events(self, event_handler: OrderEventHandler):
-        """
-        Registers an async callable that will be called when an order is updated.
+        """注册订单事件处理程序。
 
-        :param event_handler: The event handler.
+        注册一个异步可调用对象，当订单更新时将被调用。
+
+        :param event_handler: 事件处理程序。
         """
         self._ctx.dispatcher.subscribe(self._order_updates.obj, cast(dispatcher.EventHandler, event_handler))
 

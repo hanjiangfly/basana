@@ -14,6 +14,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""
+回测交易所模块
+
+实现回测交易所的核心功能，包括：
+- 订单管理（市价单、限价单、止损单、止损限价单）
+- 余额管理
+- 借贷管理
+- 价格管理
+- 事件驱动模拟
+
+支持基于K线数据的订单执行模拟。
+"""
+
 from collections import defaultdict
 from decimal import Decimal
 from typing import cast, Callable, Dict, List, Optional, Sequence, Tuple
@@ -30,6 +43,7 @@ from basana.backtesting.lending import base as lending_base
 
 logger = logging.getLogger(__name__)
 
+# 类型别名定义
 BarEventHandler = bar.BarEventHandler
 Error = errors.Error
 Fill = orders.Fill
@@ -42,58 +56,74 @@ OrderOperation = enums.OrderOperation
 
 @dataclasses.dataclass
 class Balance:
-    #: The available balance.
+    """账户余额信息。
+
+    :param available: 可用余额。
+    :param hold: 冻结余额（为挂单预留）。
+    :param borrowed: 借入余额。
+    """
+    #: 可用余额。
     available: Decimal
-    #: The total balance (available + hold - borrowed).
+    #: 总余额（available + hold - borrowed）。
     total: Decimal = dataclasses.field(init=False)
-    #: The balance on hold (reserved for open sell orders).
+    #: 冻结余额（为挂单预留）。
     hold: Decimal
-    #: The balance borrowed.
+    #: 借入余额。
     borrowed: Decimal
 
     def __post_init__(self):
+        """初始化后计算总余额。"""
         self.total = self.available + self.hold - self.borrowed
 
 
 class CreatedOrder(OrderInfo):
+    """已创建订单信息。"""
     pass
 
 
 @dataclasses.dataclass
 class CanceledOrder:
-    #: The order id.
+    """已取消订单信息。
+
+    :param id: 订单ID。
+    """
+    #: 订单ID。
     id: str
 
 
 @dataclasses.dataclass
 class OpenOrder:
-    #: The order id.
+    """挂单信息。
+
+    :param id: 订单ID。
+    :param operation: 订单操作类型。
+    :param amount: 原始数量。
+    :param amount_filled: 已成交数量。
+    """
+    #: 订单ID。
     id: str
-    #: The operation.
+    #: 订单操作类型。
     operation: OrderOperation
-    #: The original amount.
+    #: 原始数量。
     amount: Decimal
-    #: The amount filled.
+    #: 已成交数量。
     amount_filled: Decimal
 
 
 class Exchange:
-    """
-    This class implements a backtesting exchange.
+    """回测交易所类。
 
-    This backtesting exchange has support for Market, Limit, Stop and Stop Limit orders and it will simulate order
-    execution based on summarized trading activity (:class:`basana.BarEvent`).
+    实现回测交易所，支持市价单、限价单、止损单和止损限价单，基于汇总交易活动（:class:`basana.BarEvent`）模拟订单执行。
 
-    :param dispatcher: The event dispatcher.
-    :param initial_balances: The initial balance for each currency/symbol/etc.
-    :param liquidity_strategy_factory: A callable that returns a new liquidity strategy.
-    :param fee_strategy: The stragegy to use to calculate fees.
-    :param default_pair_info: The default pair information if a specific one was not set using
-        :meth:`Exchange.set_pair_info`.
-    :param bid_ask_spread: The spread to use for :meth:`Exchange.get_bid_ask`.
-    :param lending_strategy: The strategy to use for managing loans.
-    :param immediate_order_processing: If True, orders will be processed immediately after being added,
-        using the closing price of the last bar available. If False, orders will be processed in the next bar event.
+    :param dispatcher: 事件分发器。
+    :param initial_balances: 每个货币/符号等的初始余额。
+    :param liquidity_strategy_factory: 返回新流动性策略的可调用对象。
+    :param fee_strategy: 用于计算费用的策略。
+    :param default_pair_info: 如果未使用 :meth:`Exchange.set_pair_info` 设置特定交易对信息时的默认交易对信息。
+    :param bid_ask_spread: 用于 :meth:`Exchange.get_bid_ask` 的买卖价差。
+    :param lending_strategy: 用于管理借贷的策略。
+    :param immediate_order_processing: 如果为True，订单将在添加后立即处理，使用最后一个可用K线的收盘价。
+        如果为False，订单将在下一个K线事件中处理。
     """
     def __init__(
             self,
@@ -130,16 +160,17 @@ class Exchange:
         )
 
     async def get_balance(self, symbol: str) -> Balance:
-        """
-        Returns the balance for a specific currency/symbol/etc..
+        """获取指定货币/符号等的余额。
 
-        :param symbol: The currency/symbol/etc..
+        :param symbol: 货币/符号等。
+        :return: 余额信息。
         """
         return self._get_balance(symbol)
 
     async def get_balances(self) -> Dict[str, Balance]:
-        """
-        Returns all balances.
+        """获取所有余额。
+
+        :return: 包含所有余额的字典。
         """
         ret = {}
         for symbol in self._balances.get_symbols():
@@ -147,24 +178,29 @@ class Exchange:
         return ret
 
     async def get_bid_ask(self, pair: Pair) -> Tuple[Decimal, Decimal]:
-        """
-        Returns the last bid and ask price.
+        """获取最新的买卖价格。
 
-        This is calculated using the closing price of the last bar, and the bid/ask spread specified during
-        initialization.
+        使用最后一个K线的收盘价和初始化时指定的买卖价差计算。
 
-        :param pair: The trading pair.
+        :param pair: 交易对。
+        :return: 买卖价格元组（买价，卖价）。
         """
         return self._prices.get_bid_ask(pair)
 
     async def create_order(self, order_request: requests.ExchangeOrder) -> CreatedOrder:
-        # Validate request parameters.
+        """创建订单。
+
+        :param order_request: 订单请求对象。
+        :return: 已创建的订单信息。
+        :raises Error: 如果订单无法创建。
+        """
+        # 验证请求参数。
         pair_info = await self.get_pair_info(order_request.pair)
         order_request.validate(pair_info)
 
         order = order_request.create_order(uuid.uuid4().hex)
         self._order_mgr.add_order(order)
-        logger.debug(logs.StructuredMessage("Request accepted", order_id=order.id))
+        logger.debug(logs.StructuredMessage("请求已接受", order_id=order.id))
         order_info = order.get_order_info()
         return CreatedOrder(
             id=order_info.id, pair=order_info.pair, is_open=order_info.is_open, operation=order_info.operation,

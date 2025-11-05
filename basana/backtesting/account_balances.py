@@ -14,6 +14,36 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""
+【中文说明】账户余额管理模块
+
+【功能描述】
+提供交易账户余额管理功能，包括可用余额、冻结余额和借贷余额的管理。
+支持余额更新规则验证，确保账户状态始终有效。
+
+【核心组件】
+- UpdateRule抽象基类：余额更新规则接口
+- NonZero规则：确保余额非负验证
+- ValidHold规则：确保冻结余额不超过可用余额
+- AccountBalances类：账户余额管理器
+
+【账户状态】
+- 可用余额（balances）：可自由使用的资金
+- 冻结余额（holds）：已冻结但未使用的资金（如挂单）
+- 借贷余额（borrowed）：从交易所借入的资金
+
+【使用场景】
+- 回测系统中的账户状态管理
+- 订单执行前的资金验证
+- 借贷和保证金交易管理
+- 风险控制和资金安全验证
+
+【注意事项】
+- 使用Decimal进行精确数值计算
+- 支持自定义更新规则扩展
+- 遵循严格的余额验证机制
+"""
+
 from decimal import Decimal
 from typing import List
 import abc
@@ -24,11 +54,50 @@ from basana.backtesting.value_map import ValueMap, ValueMapDict
 
 
 class UpdateRule(metaclass=abc.ABCMeta):
+    """
+    【中文说明】余额更新规则抽象基类
+    
+    【功能描述】
+    定义余额更新规则的接口，用于验证账户余额更新的有效性。
+    这是一个抽象基类，需要子类实现具体的验证逻辑。
+    
+    【设计原则】
+    - 开闭原则：支持通过继承扩展新的验证规则
+    - 单一职责：每个规则只负责一种验证逻辑
+    - 接口隔离：提供清晰的验证接口
+    
+    【使用场景】
+    - 自定义余额验证规则
+    - 风险控制规则实现
+    - 交易所特定规则适配
+    """
+
     @abc.abstractmethod
     def check(
             self, updated_balances: ValueMap, updated_holds: ValueMap, updated_borrowed: ValueMap,
             delta_balances: ValueMap, delta_holds: ValueMap, delta_borrowed: ValueMap
     ):
+        """
+        【中文说明】验证余额更新
+        
+        【功能描述】
+        抽象方法，验证账户余额更新是否有效。
+        
+        【参数说明】
+        - updated_balances: ValueMap - 更新后的可用余额
+        - updated_holds: ValueMap - 更新后的冻结余额
+        - updated_borrowed: ValueMap - 更新后的借贷余额
+        - delta_balances: ValueMap - 可用余额变化量
+        - delta_holds: ValueMap - 冻结余额变化量
+        - delta_borrowed: ValueMap - 借贷余额变化量
+        
+        【异常情况】
+        - 如果验证失败，抛出相应的异常
+        
+        【注意事项】
+        - 子类必须实现此方法
+        - 验证失败时应抛出描述性异常
+        """
         raise NotImplementedError()
 
 

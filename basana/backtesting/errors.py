@@ -14,18 +14,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""
+回测错误模块
+
+定义回测系统中使用的异常类。
+"""
+
 from basana.core import errors
 
 
 class Error(errors.Error):
-    """Base class for backtesting exceptions."""
+    """回测异常基类。"""
     pass
 
 
 class NotEnoughBalance(Error):
-    """Not enough balance."""
+    """余额不足异常。"""
     pass
 
 
 class NotFound(Error):
+    """未找到异常。"""
     pass
