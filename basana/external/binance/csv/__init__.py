@@ -14,6 +14,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""
+【中文说明】Binance CSV数据模块初始化文件
+【功能描述】提供Binance交易所CSV格式K线数据的导入和处理功能
+【使用场景】用于从CSV文件加载Binance历史K线数据，支持回测和数据分析
+【注意事项】包含K线数据源的定义和导入接口
+"""
+
 # ruff: noqa
 
 from .bars import (
