@@ -14,6 +14,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""
+配对交易策略回测示例
+
+此示例演示了如何使用Basana框架进行配对交易策略的回测，包括：
+- 两个相关交易对的统计套利策略
+- 协整关系检验和Z-score计算
+- 仓位管理和风险控制
+- 图表可视化
+
+策略逻辑：
+- 基于两个相关资产的价差进行交易
+- 当价差偏离正常范围时开仓
+- 当价差回归正常范围时平仓
+"""
+
 # Bars can be downloaded using these commands:
 # python -m basana.external.binance.tools.download_bars -c BCH/USDT -p 1h -s 2021-12-01 -e 2021-12-26 \
 # -o binance_bchusdt_hourly.csv

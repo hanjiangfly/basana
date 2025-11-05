@@ -14,6 +14,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""
+配对交易策略实现
+
+此策略基于统计套利原理，通过两个相关资产的协整关系和Z-score指标生成交易信号。
+
+策略逻辑：
+- 基于两个相关资产的价差进行交易
+- 使用协整检验判断资产间的长期均衡关系
+- 当价差偏离正常范围时开仓（一个做多，一个做空）
+- 当价差回归正常范围时平仓
+
+使用场景：
+- 统计套利策略
+- 市场中性策略
+- 相关资产对的价差交易
+"""
+
 from typing import Optional
 import logging
 

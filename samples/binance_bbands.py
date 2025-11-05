@@ -14,6 +14,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""
+Binance布林带策略示例
+
+此示例演示了如何在Binance交易所上运行布林带策略的实时交易，包括：
+- 实时数据订阅和策略执行
+- 现货账户仓位管理
+- 止损机制和检查点保存
+- 需要Binance API密钥和密钥
+
+策略逻辑：
+- 基于布林带技术指标生成交易信号
+- 价格与布林带上下轨交叉关系判断
+- 仅支持做多交易（现货账户）
+"""
+
 from decimal import Decimal
 import asyncio
 import logging

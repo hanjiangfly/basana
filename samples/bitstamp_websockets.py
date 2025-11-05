@@ -14,6 +14,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""
+Bitstamp WebSocket示例
+
+此示例演示了如何使用Basana框架连接Bitstamp交易所的WebSocket实时数据流，包括：
+- K线数据流订阅
+- 订单簿数据流订阅
+- 交易数据流订阅
+- 订单事件流订阅
+
+功能特点：
+- 实时监控多个交易对的市场数据
+- 支持BTC/USD和ETH/USD等主要交易对
+- 结构化日志输出便于数据分析
+"""
+
 import asyncio
 import logging
 

@@ -14,12 +14,28 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""
+RSI策略实现
+
+此策略基于RSI（相对强弱指数）技术指标，通过超买超卖信号生成交易信号。
+
+策略逻辑：
+- 当RSI低于超卖水平时做多
+- 当RSI高于超买水平时做空
+- 基于RSI指标的反转交易策略
+
+使用场景：
+- 超买超卖区域识别
+- 反转交易策略
+- 技术分析参考
+"""
+
 from talipp.indicators import RSI
 
 import basana as bs
 
 
-# Strategy based on RSI: https://www.investopedia.com/terms/r/rsi.asp
+# 基于RSI的策略
 class Strategy(bs.TradingSignalSource):
     def __init__(self, dispatcher: bs.EventDispatcher, period: int, oversold_level: float, overbought_level: float):
         super().__init__(dispatcher)

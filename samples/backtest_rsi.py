@@ -14,6 +14,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""
+RSI策略回测示例
+
+此示例演示了如何使用Basana框架进行RSI（相对强弱指数）策略的回测，包括：
+- RSI技术指标计算和超买超卖信号
+- 仓位管理和风险控制
+- Bitstamp交易所数据集成
+- 图表可视化
+
+策略逻辑：
+- 当RSI低于超卖水平时做多
+- 当RSI高于超买水平时做空
+- 基于RSI指标的反转交易策略
+"""
+
 # Bars can be downloaded using this command:
 # python -m basana.external.bitstamp.tools.download_bars -c BTC/USD -p 1d -s 2021-01-01 -e 2021-12-31 \
 # -o bitstamp_btcusd_day.csv

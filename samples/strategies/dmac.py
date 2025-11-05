@@ -14,12 +14,28 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""
+双移动平均交叉策略实现
+
+此策略基于双移动平均交叉技术指标，通过短期和长期移动平均线的交叉关系生成交易信号。
+
+策略逻辑：
+- 当短期移动平均线上穿长期移动平均线时做多
+- 当短期移动平均线下穿长期移动平均线时做空
+- 基于趋势跟踪的动量策略
+
+使用场景：
+- 趋势识别和跟踪
+- 市场方向判断
+- 技术分析参考
+"""
+
 from talipp.indicators import EMA
 
 import basana as bs
 
 
-# Strategy based on Dual Moving Average Crossover.
+# 基于双移动平均交叉的策略
 class Strategy(bs.TradingSignalSource):
     def __init__(self, dispatcher: bs.EventDispatcher, short_term_period: int, long_term_period: int):
         super().__init__(dispatcher)
