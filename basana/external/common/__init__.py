@@ -13,3 +13,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+"""
+通用外部模块
+
+此模块提供了外部交易所集成的通用功能和工具，包括：
+- 通用CSV数据处理
+- 跨交易所通用接口
+- 数据格式标准化
+
+主要子模块：
+- csv: 通用CSV数据处理模块
+"""

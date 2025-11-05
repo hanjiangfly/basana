@@ -13,3 +13,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+"""
+通用CSV数据处理模块
+
+此模块提供了跨交易所通用的CSV数据处理功能，包括：
+- 通用K线数据加载
+- CSV格式标准化
+- 跨交易所数据兼容性处理
+
+主要类：
+- bars: 通用CSV K线数据源
+"""
