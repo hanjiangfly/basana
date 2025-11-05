@@ -14,6 +14,27 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""
+仓位管理示例
+
+此示例演示了如何在回测环境中实现复杂的仓位管理策略，包括：
+- 多交易对仓位跟踪
+- 止损机制
+- 自动借贷和还款
+- 平均价格计算
+- 未实现盈亏监控
+
+主要组件：
+- PositionInfo: 仓位信息数据结构
+- PositionManager: 仓位管理器
+- signed_to_position: 符号转持仓方向函数
+
+使用场景：
+- 多策略组合管理
+- 风险控制
+- 自动交易系统
+"""
+
 from collections import defaultdict
 from decimal import Decimal
 from typing import cast, Dict, Optional

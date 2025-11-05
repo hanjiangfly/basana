@@ -14,6 +14,31 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""
+Binance现货账户仓位管理示例
+
+此示例演示了如何在Binance现货账户中实现仓位管理策略，包括：
+- 现货账户订单管理
+- 实时仓位跟踪
+- 止损机制
+- 订单状态更新处理
+
+主要组件：
+- OrderInfo: 订单信息数据结构
+- PositionInfo: 仓位信息数据结构
+- SpotAccountPositionManager: 现货账户仓位管理器
+
+与回测版本的区别：
+- 使用Binance现货账户API
+- 支持实时订单状态更新
+- 无自动借贷功能（现货账户不支持做空）
+
+使用场景：
+- 实时交易系统
+- 现货账户管理
+- 风险控制
+"""
+
 from collections import defaultdict
 from decimal import Decimal
 from typing import cast, Dict, Optional
