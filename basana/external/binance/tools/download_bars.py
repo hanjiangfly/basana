@@ -175,6 +175,7 @@ async def main(params: Optional[List[str]] = None, config_overrides: dict = {}):
         "-e", "--end", help="The ending date YYYY-MM-DD format. Included in the range.", required=True
     )
     parser.add_argument("-o", "--output", help="The output file.", required=False, default=None)
+    parser.add_argument("--proxy", help="Proxy URL for HTTP requests (supports HTTP/HTTPS/SOCKS5).", required=False, default=None)
     args = parser.parse_args(args=params)
 
     # 【中文说明】计算时间参数
@@ -197,7 +198,7 @@ async def main(params: Optional[List[str]] = None, config_overrides: dict = {}):
     
     # 【中文说明】异步下载数据
     async with aiohttp.ClientSession() as session:
-        cli = client.APIClient(session=session, tb=tb, config_overrides=config_overrides)
+        cli = client.APIClient(session=session, tb=tb, config_overrides=config_overrides, proxy=args.proxy)
         eof = False
         currency_pair = to_binance_currency_pair(args.currency_pair)
         

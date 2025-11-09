@@ -93,7 +93,7 @@ class BaseClient:
     def __init__(
             self, api_key: Optional[str] = None, api_secret: Optional[str] = None,
             session: Optional[aiohttp.ClientSession] = None, tb: Optional[token_bucket.TokenBucketLimiter] = None,
-            config_overrides: dict = {}
+            config_overrides: dict = {}, proxy: Optional[str] = None
     ):
         """
         【中文说明】初始化基础客户端
@@ -103,6 +103,7 @@ class BaseClient:
         - session: aiohttp客户端会话，可选
         - tb: 令牌桶限流器，可选
         - config_overrides: 配置覆盖项，可选
+        - proxy: 代理URL，支持HTTP/HTTPS/SOCKS5代理，可选
         【注意事项】api_key和api_secret必须同时设置或同时不设置
         """
         assert not ((api_key is None) ^ (api_secret is None)), \
@@ -113,6 +114,7 @@ class BaseClient:
         self._session = session
         self._tb = tb
         self._config_overrides = config_overrides
+        self._proxy = proxy
 
     async def make_request(
             self, method: str, path: str, send_key: bool = False, send_sig: bool = False,
@@ -134,7 +136,7 @@ class BaseClient:
         if self._tb and (sleep_time := self._tb.consume()):
             await asyncio.sleep(sleep_time)
 
-        async with core_helpers.use_or_create_session(session=self._session) as session:
+        async with core_helpers.use_or_create_session(session=self._session, proxy=self._proxy) as session:
             headers = {}
             session_method = {
                 "DELETE": session.delete,

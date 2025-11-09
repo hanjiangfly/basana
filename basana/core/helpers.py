@@ -542,34 +542,51 @@ def no_raise(logger: logging.Logger, msg: str, **kwargs):
 
 
 @contextlib.asynccontextmanager
-async def use_or_create_session(session: Optional[aiohttp.ClientSession] = None):
+async def use_or_create_session(session: Optional[aiohttp.ClientSession] = None, proxy: Optional[str] = None):
     """
     【中文说明】HTTP会话管理上下文管理器
     
     【功能描述】
     管理aiohttp.ClientSession的异步上下文管理器。
     如果提供了会话则使用现有会话，否则创建新会话。
+    支持代理配置，包括SOCKS5代理。
     
     【参数说明】
     - session: Optional[aiohttp.ClientSession] - 可选的现有会话
+    - proxy: Optional[str] - 代理URL，支持HTTP/HTTPS/SOCKS5代理
     
     【使用场景】
     - HTTP客户端会话管理
     - 会话复用和资源管理
     - 避免会话泄漏
+    - 通过代理访问网络资源
     
     【注意事项】
     - 如果创建新会话，会自动管理其生命周期
     - 使用现有会话时不会自动关闭
     - 遵循异步上下文管理器协议
+    - 支持SOCKS5代理需要安装aiohttp_socks库
     """
     if session:
         # 使用现有会话
         yield session
     else:
         # 创建新会话并管理其生命周期
-        async with aiohttp.ClientSession() as new_session:
-            yield new_session
+        if proxy:
+            # 支持代理配置
+            if proxy.startswith('socks5://'):
+                # 使用SOCKS5代理
+                from aiohttp_socks import ProxyConnector
+                connector = ProxyConnector.from_url(proxy)
+            else:
+                # 使用HTTP/HTTPS代理
+                connector = aiohttp.TCPConnector()
+            async with aiohttp.ClientSession(connector=connector) as new_session:
+                yield new_session
+        else:
+            # 无代理，使用默认连接器
+            async with aiohttp.ClientSession() as new_session:
+                yield new_session
 
 
 def round_decimal(value: Decimal, precision: int, rounding=None) -> Decimal:
